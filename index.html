@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cactus Viewer</title>
+
+  <script async src="https://ga.jspm.io/npm:es-module-shims@1.7.1/dist/es-module-shims.js"></script>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.172.0/build/three.module.min.js"
+    }
+  }
+  </script>
+
+  <script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer/dist/model-viewer-module.min.js"></script>
+  <script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer-effects/dist/model-viewer-effects.min.js"></script>
+
+  <style>
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+      background: #111;
+    }
+
+    model-viewer {
+      width: 100vw;
+      height: 100vh;
+      background: #111;
+    }
+
+    #controls {
+      position: fixed;
+      left: 50%;
+      bottom: 20px;
+      transform: translateX(-50%);
+      z-index: 10;
+      display: flex;
+      gap: 10px;
+      background: rgba(255,255,255,0.95);
+      padding: 12px 16px;
+      border-radius: 999px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+    }
+
+    button {
+      border: 1px solid #ddd;
+      background: white;
+      border-radius: 999px;
+      padding: 10px 18px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    button.active {
+      background: #ff6a00;
+      color: white;
+      border-color: #ff6a00;
+    }
+
+    #status {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      z-index: 20;
+      color: white;
+      background: rgba(0,0,0,0.7);
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 14px;
+      max-width: 90vw;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+
+<div id="status">Загрузка модели...</div>
+
+<model-viewer
+  id="viewer"
+  src="./cactus.glb"
+  camera-controls
+  shadow-intensity="1"
+  exposure="1"
+  environment-image="neutral"
+  interaction-prompt="none"
+  auto-rotate
+  camera-orbit="0deg 75deg 4m"
+  min-camera-orbit="auto auto 1m"
+  max-camera-orbit="auto auto 20m"
+>
+
+  <effect-composer>
+    <outline-effect id="outlineEffect" color="yellow" blend-mode="skip"></outline-effect>
+  </effect-composer>
+
+</model-viewer>
+
+<div id="controls">
+  <button id="playBtn">Анимация</button>
+  <button id="stopBtn">Стоп</button>
+  <button id="effectBtn">Эффект</button>
+</div>
+
+<script>
+(() => {
+  const viewer = document.getElementById('viewer');
+  const status = document.getElementById('status');
+  const playBtn = document.getElementById('playBtn');
+  const stopBtn = document.getElementById('stopBtn');
+  const effectBtn = document.getElementById('effectBtn');
+  const outlineEffect = document.getElementById('outlineEffect');
+
+  let animationName = null;
+  let effectOn = false;
+
+  function setStatus(text) {
+    status.textContent = text;
+    console.log(text);
+  }
+
+  viewer.addEventListener('load', () => {
+    const animations = viewer.availableAnimations || [];
+    console.log('Animations:', animations);
+
+    if (animations.length > 0) {
+      animationName = animations[0];
+      viewer.animationName = animationName;
+      viewer.pause();
+      viewer.currentTime = 0;
+      setStatus('Модель загружена. Анимация найдена: ' + animationName);
+    } else {
+      setStatus('Модель загружена, но анимация не найдена.');
+    }
+  });
+
+  viewer.addEventListener('error', (e) => {
+    console.error('Ошибка модели:', e);
+    setStatus('Ошибка загрузки. Проверь, что файл называется cactus.glb и лежит рядом с index.html');
+  });
+
+  playBtn.addEventListener('click', () => {
+    if (animationName) {
+      viewer.animationName = animationName;
+      viewer.currentTime = 0;
+      viewer.play();
+    }
+  });
+
+  stopBtn.addEventListener('click', () => {
+    viewer.pause();
+    viewer.currentTime = 0;
+  });
+
+  effectBtn.addEventListener('click', () => {
+    effectOn = !effectOn;
+
+    if (effectOn) {
+      outlineEffect.setAttribute('blend-mode', 'default');
+      effectBtn.classList.add('active');
+    } else {
+      outlineEffect.setAttribute('blend-mode', 'skip');
+      effectBtn.classList.remove('active');
+    }
+  });
+})();
+</script>
+
+</body>
+</html>
